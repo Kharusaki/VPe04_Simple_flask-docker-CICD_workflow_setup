@@ -45,3 +45,30 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+
+    steps:
+      - name: Set lowercase image name
+        run: echo "IMAGE_NAME=${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            IMAGE="ghcr.io/${{ env.IMAGE_NAME }}:latest"
+            docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
+            docker pull "$IMAGE"
+            docker stop dino-game 2>/dev/null || true
+            docker rm dino-game 2>/dev/null || true
+            docker run -d --name dino-game --restart unless-stopped -p 5000:5000 "$IMAGE"
+            sleep 3
+            curl -fsS http://127.0.0.1:5000/health

@@ -74,3 +74,17 @@ canvas {
   font-size: 18px;
   font-variant-numeric: tabular-nums;
 }
+
+.score .life {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  background: #e11d48;
+  margin-left: 3px;
+  vertical-align: text-bottom;
+}
+
+.score .life.dim {
+  background: #d1d5db;
+}

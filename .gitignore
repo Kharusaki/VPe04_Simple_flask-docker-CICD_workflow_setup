@@ -5,3 +5,7 @@ venv/
 .env
 .pytest_cache/
 .DS_Store
+
+# SSH-ключ деплоя — никогда не коммитить!
+.deploy_key
+.deploy_key.pub

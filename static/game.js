@@ -2,6 +2,8 @@ const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 const scoreEl = document.getElementById("score");
 const bestEl = document.getElementById("best");
+const levelEl = document.getElementById("level");
+const livesEl = document.getElementById("lives");
 const overlay = document.getElementById("overlay");
 
 const W = canvas.width;
@@ -10,6 +12,7 @@ const GROUND_Y = H - 36;
 
 const GRAVITY = 2600;
 const JUMP_VELOCITY = -950;
+const MAX_LIVES = 3;
 
 const dino = {
   x: 70,
@@ -28,8 +31,22 @@ let spawnTimer = 0;
 let spawnInterval = 1.3;
 let score = 0;
 let best = 0;
+let lives = MAX_LIVES;
+let level = 1;
+let hitTimer = 0;
 let state = "ready";
 let lastTime = 0;
+
+function renderHud() {
+  scoreEl.textContent = Math.floor(score);
+  levelEl.textContent = level;
+  livesEl.innerHTML = "";
+  for (let i = 0; i < MAX_LIVES; i++) {
+    const life = document.createElement("span");
+    life.className = "life" + (i < lives ? "" : " dim");
+    livesEl.appendChild(life);
+  }
+}
 
 function start() {
   ferns = [];
@@ -37,11 +54,15 @@ function start() {
   spawnTimer = 0;
   spawnInterval = 1.3;
   score = 0;
+  lives = MAX_LIVES;
+  level = 1;
+  hitTimer = 0;
   dino.y = GROUND_Y;
   dino.vy = 0;
   dino.onGround = true;
   state = "playing";
   overlay.classList.add("hidden");
+  renderHud();
   lastTime = performance.now();
 }
 
@@ -53,6 +74,16 @@ function jump() {
   if (dino.onGround) {
     dino.vy = JUMP_VELOCITY;
     dino.onGround = false;
+  }
+}
+
+function hit() {
+  lives -= 1;
+  ferns = [];
+  hitTimer = 1.2;
+  renderHud();
+  if (lives <= 0) {
+    gameOver();
   }
 }
 
@@ -81,10 +112,15 @@ function collides(fern) {
   );
 }
 
-function update(dt) {
-  speed += 6 * dt;
-  score += speed * dt * 0.08;
+function computeLevel() {
+  const newLevel = Math.floor(score / 200) + 1;
+  if (newLevel !== level) {
+    level = newLevel;
+    renderHud();
+  }
+}
 
+function update(dt) {
   dino.legTimer += dt;
   if (dino.legTimer > 0.09) {
     dino.legTimer = 0;
@@ -99,10 +135,20 @@ function update(dt) {
     dino.onGround = true;
   }
 
+  if (hitTimer > 0) {
+    hitTimer -= dt;
+    renderHud();
+    return;
+  }
+
+  computeLevel();
+  speed = 330 + (level - 1) * 70;
+  score += speed * dt * 0.08;
+
   spawnTimer += dt;
   if (spawnTimer >= spawnInterval) {
     spawnTimer = 0;
-    spawnInterval = Math.max(0.55, 1.3 - speed / 2500);
+    spawnInterval = Math.max(0.55, 1.3 - (level - 1) * 0.12);
     const h = 34 + Math.random() * 34;
     ferns.push({ x: W + 24, w: 28, h });
   }
@@ -114,15 +160,19 @@ function update(dt) {
 
   for (const fern of ferns) {
     if (collides(fern)) {
-      gameOver();
+      hit();
       break;
     }
   }
 
-  scoreEl.textContent = Math.floor(score);
+  renderHud();
 }
 
 function drawDino() {
+  if (hitTimer > 0 && Math.floor(hitTimer * 10) % 2 === 0) {
+    return;
+  }
+
   const x = dino.x;
   const feet = dino.y;
   const top = feet - dino.h;
@@ -208,6 +258,7 @@ canvas.addEventListener("pointerdown", (event) => {
 });
 
 bestEl.textContent = best;
+renderHud();
 requestAnimationFrame((now) => {
   lastTime = now;
   requestAnimationFrame(frame);
