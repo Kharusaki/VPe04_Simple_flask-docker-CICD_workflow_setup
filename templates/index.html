@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Дино и гигантские папоротники</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+<body>
+  <main class="wrap">
+    <h1>Дино и гигантские папоротники</h1>
+    <p class="hint">Пробел · клик · тап — прыжок</p>
+
+    <div class="stage">
+      <canvas id="game" width="800" height="260"></canvas>
+      <div id="overlay" class="overlay">
+        <p class="overlay-title">Готов?</p>
+        <p class="overlay-sub">Нажми пробел, чтобы начать</p>
+      </div>
+    </div>
+
+    <p class="score">Очки: <span id="score">0</span> · Рекорд: <span id="best">0</span></p>
+  </main>
+
+  <script src="{{ url_for('static', filename='game.js') }}"></script>
+</body>
+</html>
